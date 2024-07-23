@@ -2,3 +2,12 @@
     border: 1px solid black
 }
 
+#tooltip {
+    position: absolute;
+    height: 100px;
+    width: 250px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: antiquewhite;
+}

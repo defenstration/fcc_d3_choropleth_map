@@ -34,8 +34,10 @@ const projection = d3.geoMercator()
 const eduData = d3.json(urlEducation)
 const countyData = d3.json(urlCounty)
 
+const legendScale = [0, 5, 10, 15, 20, 25, 50]
+
 const colorScale = d3.scaleThreshold()
-                        .domain([0, 5, 10, 15, 20, 25, 50])
+                        .domain(legendScale)
                         .range(d3.schemeRdPu[7])
 
 const svg = d3.select('body')
@@ -43,10 +45,7 @@ const svg = d3.select('body')
                 .attr('height', h)
                 .attr('width', w)
 
-const legend = d3.select('body')
-                    .append('svg')
-                    .attr('height', 75)
-                    .attr('width', 250)
+
 
 Promise.all([eduData, countyData])
     .then(data => ready(data[0], data[1]))
@@ -55,10 +54,8 @@ const ready = (education, county) => {
     const countyTopo = topojson.feature(county, county.objects.counties).features
     
     const eduTopo = new Map(education.map(d => [d.fips, d.bachelorsOrHigher]))
-    console.log(education[0])
 
     const fipsCountyMap = education.map(d => [d.fips, `${d.area_name}, ${d.state}`])
-    console.log(fipsCountyMap[0])
 
     svg.append('g')
         .selectAll('path')
@@ -66,8 +63,10 @@ const ready = (education, county) => {
         .enter()
         .append('path')
         .attr('d', path)
-        .attr('data-education', d => education)
+        .attr('data-education', d => eduTopo.get(d.id))
         .attr('data-fips', d => d.id)
+        .attr('data-county', d => fipsCountyMap.find(i => i[0] === d.id)[1])
+        .attr('class', 'county')
         .attr('fill', d => {
             const educationNum = eduTopo.get(d.id)
             return educationNum ? colorScale(educationNum) : 'green'
@@ -76,15 +75,31 @@ const ready = (education, county) => {
         .attr('stroke-width', 0.5)
         .on('mouseover', (event, d) => {
             const educationNum = eduTopo.get(d.id)
-            tooltip.transition().style('opacity', .9)
-            tooltip.style('left', (event.pageX + 10) + 'px')
+            tooltip.transition().style('display', "block")
+            tooltip
+            .style('left', (event.pageX + 10) + 'px')
             .style('top', (event.pageY + 10) + 'px')
             .attr('data-education', educationNum)
             .html(`County: ${fipsCountyMap.find(i => i[0] === d.id)[1]}, Percentage ${educationNum}`); 
         })
         .on('mouseout', () => {
-            tooltip.transition().style('opacity', .1);
+            tooltip.transition().style('display', 'none');
             })
 }
 
+const legend = d3.select('body')
+                    .append('svg')
+                    .attr('id', 'legend')
+                    .attr('height', 75)
+                    .attr('width', 250)
 
+
+
+legend.selectAll('rect')
+        .data(legendScale)
+        .enter()
+        .append('rect')
+        .attr('width', 250 / legendScale.length)
+        .attr('height', 75)
+        .attr('x', (d, i) => i * 250 / legendScale.length)
+        .attr('fill', colorScale)
