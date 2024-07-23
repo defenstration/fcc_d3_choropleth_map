@@ -53,9 +53,12 @@ Promise.all([eduData, countyData])
 
 const ready = (education, county) => {
     const countyTopo = topojson.feature(county, county.objects.counties).features
-
+    
     const eduTopo = new Map(education.map(d => [d.fips, d.bachelorsOrHigher]))
-    console.log(eduTopo)
+    console.log(education[0])
+
+    const fipsCountyMap = education.map(d => [d.fips, `${d.area_name}, ${d.state}`])
+    console.log(fipsCountyMap[0])
 
     svg.append('g')
         .selectAll('path')
@@ -72,12 +75,16 @@ const ready = (education, county) => {
         .attr('stroke', '#fff')
         .attr('stroke-width', 0.5)
         .on('mouseover', (event, d) => {
-            tooltip.transition().attr('opacity', 1)
+            const educationNum = eduTopo.get(d.id)
+            tooltip.transition().style('opacity', .9)
             tooltip.style('left', (event.pageX + 10) + 'px')
             .style('top', (event.pageY + 10) + 'px')
-            .attr('data-education', `${education.area_name}`)
-            .html(`County: , Percentage`); 
+            .attr('data-education', educationNum)
+            .html(`County: ${fipsCountyMap.find(i => i[0] === d.id)[1]}, Percentage ${educationNum}`); 
         })
+        .on('mouseout', () => {
+            tooltip.transition().style('opacity', .1);
+            })
 }
 
 
